@@ -49,9 +49,14 @@ public class DbResource {
             return world;
         });
 
-        worldRepository.update(worlds);
-
         return worlds;
+    }
+
+    @GET
+    @Path( "/createdata" )
+    public String createData() {
+        worldRepository.createData();
+        return "OK";
     }
 
     private World randomWorld() {
