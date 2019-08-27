@@ -4,6 +4,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
 import javax.transaction.Transactional;
 
 import org.hibernate.FlushMode;
@@ -44,4 +45,13 @@ public class WorldRepository {
         }
         s.flush();
     }
+
+    public World findReadonly(int id) {
+        Session s = em.unwrap(Session.class);
+        s.setHibernateFlushMode(FlushMode.MANUAL);
+        s.setDefaultReadOnly(true);
+        final World world = s.load(World.class, id);
+        return world;
+    }
+
 }
