@@ -1,14 +1,17 @@
 package io.quarkus.benchmark.repository;
 
+import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.LockModeType;
 import javax.transaction.Transactional;
 
 import org.hibernate.FlushMode;
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.StatelessSession;
 
 import io.quarkus.benchmark.model.World;
 
@@ -16,58 +19,48 @@ import io.quarkus.benchmark.model.World;
 public class WorldRepository {
 
     @Inject
-    EntityManager em;
-
-    public World readWriteWorld(int id) {
-        return em.find(World.class, id, LockModeType.PESSIMISTIC_WRITE);
-    }
-
-    @Transactional
-    public void update(World[] worlds) {
-        for (World world : worlds) {
-            em.merge(world);
-        }
-    }
+    SessionFactory sf;
 
     @Transactional
     public void createData() {
-        Session s = em.unwrap( Session.class );
-        final ThreadLocalRandom random = ThreadLocalRandom.current();
-        s.setHibernateFlushMode( FlushMode.MANUAL );
-        for ( int i = 1; i <= 10000; i++ ) {
-            final World world = new World();
-            world.setId( i );
-            world.setRandomNumber( 1 + random.nextInt( 10000 ) );
-            s.persist( world );
-            if ( 1 % 200 == 0 ) {
-                s.flush();
+        try (StatelessSession statelessSession = sf.openStatelessSession()) {
+            final ThreadLocalRandom random = ThreadLocalRandom.current();
+            for (int i=1; i<=10000; i++) {
+                final World world = new World();
+                world.setId(i);
+                world.setRandomNumber(1 + random.nextInt(10000));
+                statelessSession.insert(world);
             }
         }
-        s.flush();
     }
 
-    public World findReadonly(int id) {
-        Session s = em.unwrap(Session.class);
-        s.setHibernateFlushMode(FlushMode.MANUAL);
-        s.setDefaultReadOnly(true);
-        final World world = s.get(World.class, id);
-        s.clear();
-        return world;
-    }
-
-    public void hintBatchSize(int count) {
-        Session s = em.unwrap(Session.class);
-        s.setJdbcBatchSize( count );
-    }
-
-    @Transactional
-    public void updateAll(World[] worlds) {
-        Session s = em.unwrap( Session.class );
-//        s.setHibernateFlushMode(  );
-        s.setJdbcBatchSize( worlds.length );
-        for (World w : worlds) {
-            s.update(w);
+    public World findSingleAndStateless(int id) {
+        try (StatelessSession ss = sf.openStatelessSession()) {
+            return singleStatelessWorldLoad(ss,id);
         }
+    }
+
+    public void updateAll(Collection<World> worlds) {
+        try (Session s = sf.openSession()) {
+            s.setJdbcBatchSize(worlds.size());
+            s.setHibernateFlushMode(FlushMode.MANUAL);
+            for (World w : worlds) {
+                s.update(w);
+            }
+            s.flush();
+            s.clear();
+        }
+    }
+
+    public Collection<World> findReadonly(Set<Integer> ids) {
+        try (StatelessSession s = sf.openStatelessSession()) {
+            //The rules require individual load: we can't use the Hibernate feature which allows load by multiple IDs as one single operation
+            return ids.stream().map(id -> singleStatelessWorldLoad(s,id)).collect(Collectors.toList());
+        }
+    }
+
+    private static World singleStatelessWorldLoad(final StatelessSession ss, final Integer id) {
+        return (World) ss.get(World.class, id);
     }
 
 }
