@@ -59,3 +59,14 @@ There is currently one repository implementation.
 ### Template rendering Test
 
     http://localhost:8080/fortunes
+
+# External testing
+
+During development it might be easier to start a PostgreSQL instance directly:
+
+    sudo podman run --ulimit memlock=-1:-1 -it --rm=true --memory-swappiness=0 --name HibernateTestingPGSQL -e POSTGRES_USER=benchmarkdbuser -e POSTGRES_PASSWORD=benchmarkdbpass -e POSTGRES_DB=hello_world -p 5432:5432 postgres:11
+
+Generate load on the application:
+
+     ~/sources/wrk2/wrk -c 100 -d 60 -R 400 http://localhost:8080/db
+

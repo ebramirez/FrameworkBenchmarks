@@ -42,13 +42,16 @@ public class DbResource {
     @GET
     @Path("/updates")
     //Rules: https://github.com/TechEmpower/FrameworkBenchmarks/wiki/Project-Information-Framework-Tests-Overview#database-updates
-    @Transactional
+    //N.B. the benchmark seems to be designed to get in deadlocks when using a "safe pattern" of updating
+    // the entity within the same transaction as the one which read it.
+    // We therefore need to do a "read then write" while relinquishing the transaction between the two operations, as
+    // all other tested frameworks seem to do.
     public World[] updates(@QueryParam("queries") String queries) {
         final int count = parseQueryCount( queries );
         World[] worlds = new World[count];
         worldRepository.hintBatchSize(count);
         Arrays.setAll(worlds, i -> {
-            World world = worldRepository.readWriteWorld(randomWorldNumber());
+            World world = randomWorldForRead();
             world.setRandomNumber(randomWorldNumber());
             return world;
         });
