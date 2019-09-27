@@ -50,13 +50,24 @@ public class WorldRepository {
         Session s = em.unwrap(Session.class);
         s.setHibernateFlushMode(FlushMode.MANUAL);
         s.setDefaultReadOnly(true);
-        final World world = s.load(World.class, id);
+        final World world = s.get(World.class, id);
+        s.clear();
         return world;
     }
 
     public void hintBatchSize(int count) {
         Session s = em.unwrap(Session.class);
         s.setJdbcBatchSize( count );
+    }
+
+    @Transactional
+    public void updateAll(World[] worlds) {
+        Session s = em.unwrap( Session.class );
+//        s.setHibernateFlushMode(  );
+        s.setJdbcBatchSize( worlds.length );
+        for (World w : worlds) {
+            s.update(w);
+        }
     }
 
 }

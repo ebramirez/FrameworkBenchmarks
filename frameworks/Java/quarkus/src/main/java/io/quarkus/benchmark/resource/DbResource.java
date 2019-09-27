@@ -34,8 +34,11 @@ public class DbResource {
     @GET
     @Path("/queries")
     public World[] queries(@QueryParam("queries") String queries) {
-        World[] worlds = new World[parseQueryCount(queries)];
-        Arrays.setAll(worlds, i -> randomWorldForRead());
+        final int count = parseQueryCount( queries );
+        World[] worlds = new World[count];
+        for (int i=0; i<count; i++) {
+            worlds[i] = randomWorldForRead();
+        }
         return worlds;
     }
 
@@ -49,13 +52,14 @@ public class DbResource {
     public World[] updates(@QueryParam("queries") String queries) {
         final int count = parseQueryCount( queries );
         World[] worlds = new World[count];
-        worldRepository.hintBatchSize(count);
-        Arrays.setAll(worlds, i -> {
+//        worldRepository.hintBatchSize(count);
+        for (int i=0; i<count; i++) {
             World world = randomWorldForRead();
-            world.setRandomNumber(randomWorldNumber());
-            return world;
-        });
-
+            final int previousRead = world.getRandomNumber();
+            world.setRandomNumber( randomWorldNumber() );
+            worlds[i] = world;
+        }
+        worldRepository.updateAll(worlds);
         return worlds;
     }
 
