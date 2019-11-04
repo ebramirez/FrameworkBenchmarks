@@ -69,6 +69,10 @@ During development it might be easier to start a PostgreSQL instance directly:
 
 Then edit the `application.properties` resource, so to point to the database on localhost.
 
+On first run make sure you set Hibernate to create the schema:
+
+    quarkus.hibernate-orm.database.generation=drop-and-create
+
 Build the application
 
     mvn clean package
@@ -76,6 +80,10 @@ Build the application
 Run the application
 
     ./start-app.sh
+
+If the DB is empty, generate the testing database by hitting this endpoint once:
+
+    http://127.0.0.1:8080/createdata
 
 Generate load on the application:
 

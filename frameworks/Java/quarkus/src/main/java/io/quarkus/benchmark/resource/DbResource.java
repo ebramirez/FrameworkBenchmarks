@@ -28,7 +28,9 @@ public class DbResource {
     @GET
     @Path("/db")
     public World db() {
-        return randomWorldForRead();
+        World world = randomWorldForRead();
+        if (world==null) throw new IllegalStateException( "No data found in DB. Did you seed the database? Make sure to invoke /createdata once." );
+        return world;
     }
 
     @GET
@@ -50,7 +52,8 @@ public class DbResource {
         final int count = parseQueryCount(queries);
         final Collection<World> worlds = randomWorldForRead(count);
         worlds.forEach( w -> {
-            //Read the one field, as required by the rules (odd??)
+            //Read the one field, as required by the rule following rule: (odd??)
+            // # vi. At least the randomNumber field must be read from the database result set.
             final int previousRead = w.getRandomNumber();
             //Update it
             w.setRandomNumber( randomWorldNumber() );
