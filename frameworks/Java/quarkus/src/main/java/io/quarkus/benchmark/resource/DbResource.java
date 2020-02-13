@@ -75,8 +75,9 @@ public class DbResource {
 
     private Collection<World> randomWorldForRead(int count) {
         Set<Integer> ids = new HashSet<>(count);
-        for (int i=0; i<count; i++) {
-            ids.add(Integer.valueOf(randomWorldNumber()));
+        int counter = 0;
+        while (counter < count) {
+            counter += ids.add(Integer.valueOf(randomWorldNumber())) ? 1 : 0;
         }
         return worldRepository.findReadonly(ids);
     }
