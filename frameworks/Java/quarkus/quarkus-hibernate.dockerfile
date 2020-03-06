@@ -11,7 +11,7 @@ COPY pgclient/src pgclient/src
 
 RUN mvn package -q -pl hibernate -am
 
-FROM openjdk:11.0.3-jdk-slim
+FROM openjdk:11.0.6-jdk-slim
 WORKDIR /quarkus
 COPY --from=maven /quarkus/hibernate/target/lib lib
 COPY --from=maven /quarkus/hibernate/target/hibernate-1.0-SNAPSHOT-runner.jar app.jar

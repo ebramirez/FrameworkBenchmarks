@@ -11,7 +11,7 @@ COPY pgclient/src pgclient/src
 
 RUN mvn package -q -pl base
 
-FROM openjdk:11.0.3-jdk-slim
+FROM openjdk:11.0.6-jdk-slim
 WORKDIR /quarkus
 COPY --from=maven /quarkus/base/target/lib lib
 COPY --from=maven /quarkus/base/target/base-1.0-SNAPSHOT-runner.jar app.jar
