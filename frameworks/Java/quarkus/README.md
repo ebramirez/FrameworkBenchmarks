@@ -4,7 +4,7 @@ This is the Quarkus portion of a [benchmarking test suite](../) comparing a vari
 
 There is currently one repository implementation.
 * [WorldRepository](src/main/java/io/quarkus/benchmark/repository/WorldRepository.java) is using Hibernate ORM,
-the reference JPA implementation for Quarkus.
+the ORM and JPA implementation in Quarkus.
 
 ### Plaintext Test
 
@@ -81,13 +81,17 @@ Run the application
 
     ./start-app.sh
 
-If the DB is empty, generate the testing database by hitting this endpoint once:
+If you just creasted the DB schema, you will need to create the test data. Hit this endpoint once:
 
     http://127.0.0.1:8080/createdata
 
-Generate load on the application:
+Generate load on the application to test / profile it. I suggest to use `https://github.com/giltene/wrk2`.
+
+Example run, assuming you have built wrk2 in `~/sources/wrk2` :
 
      ~/sources/wrk2/wrk -c 100 -d 60 -R 400 http://localhost:8080/db
 
-(or any of the other URLs meaningful for the benchmark)
+The URL `http://localhost:8080/db` represents one specific benchmark; there are several more to try
+but you will likely want to focus on them one at a time.
+
 

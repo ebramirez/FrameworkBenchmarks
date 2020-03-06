@@ -52,11 +52,11 @@ public class DbResource {
         final int count = parseQueryCount(queries);
         final Collection<World> worlds = randomWorldForRead(count);
         worlds.forEach( w -> {
-            //Read the one field, as required by the rule following rule: (odd??)
+            //Read the one field, as required by the following rule:
             // # vi. At least the randomNumber field must be read from the database result set.
             final int previousRead = w.getRandomNumber();
             //Update it
-            w.setRandomNumber( randomWorldNumber() );
+            w.setRandomNumber(randomWorldNumber());
         } );
         worldRepository.updateAll(worlds);
         return worlds.toArray(new World[0]);
