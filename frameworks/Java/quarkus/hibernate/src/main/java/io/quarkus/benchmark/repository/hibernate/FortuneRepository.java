@@ -1,24 +1,22 @@
 package io.quarkus.benchmark.repository.hibernate;
 
-import java.util.List;
+import io.quarkus.benchmark.model.hibernate.Fortune;
+import org.hibernate.SessionFactory;
+import org.hibernate.StatelessSession;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import javax.transaction.Transactional;
-
-import io.quarkus.benchmark.model.hibernate.Fortune;
+import java.util.List;
 
 @ApplicationScoped
 public class FortuneRepository {
 
     @Inject
-    EntityManager em;
+    SessionFactory sf;
 
-    @Transactional
-    public List<Fortune> findAll() {
-        Query query = em.createQuery("SELECT f FROM Fortune f");
-        return query.getResultList();
+    public List<Fortune> findAllStateless() {
+        try (StatelessSession s = sf.openStatelessSession()) {
+            return s.createQuery("FROM Fortune", Fortune.class).list();
+        }
     }
 }

@@ -22,9 +22,9 @@
         "versus": "Netty"
       },
       "hibernate": {
-        "db_url": "/hibernate/db",
-        "query_url": "/hibernate/queries?queries=",
-        "fortune_url": "/hibernate/fortunes",
+        "db_url": "/db",
+        "query_url": "/queries?queries=",
+        "fortune_url": "/fortunes",
         "port": 8080,
         "approach": "Realistic",
         "classification": "fullstack",
