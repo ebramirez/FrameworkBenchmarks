@@ -1,5 +1,6 @@
 package io.quarkus.benchmark.repository.hibernate;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -59,7 +60,11 @@ public class WorldRepository {
     public Collection<World> findReadonly(Set<Integer> ids) {
         try (StatelessSession s = sf.openStatelessSession()) {
             //The rules require individual load: we can't use the Hibernate feature which allows load by multiple IDs as one single operation
-            return ids.stream().map(id -> singleStatelessWorldLoad(s,id)).collect(Collectors.toList());
+            ArrayList l = new ArrayList<>(ids.size());
+            for (Integer id : ids) {
+                l.add(singleStatelessWorldLoad(s,id));
+            }
+            return l;
         }
     }
 
