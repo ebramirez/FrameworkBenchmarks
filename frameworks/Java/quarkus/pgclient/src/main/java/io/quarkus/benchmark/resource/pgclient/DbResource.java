@@ -15,21 +15,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.quarkus.benchmark.model.World;
 import io.quarkus.benchmark.repository.pgclient.WorldRepository;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+
 
 @ApplicationScoped
-@Path("/pgclient")
+@Path("/")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class DbResource {
-
-    private static Logger LOG = LoggerFactory.getLogger(WorldRepository.class);
 
     @Inject
     WorldRepository worldRepository;
@@ -37,48 +31,38 @@ public class DbResource {
     @GET
     @Path("/db")
     public CompletionStage<World> db() {
-        return randomWorld()
-                .to(m -> {
-                    CompletableFuture<World> cf = new CompletableFuture<>();
-                    m.subscribe(cf::complete, cf::completeExceptionally, () -> cf.complete(null));
-                    return cf;
-                });
+        return randomWorld();
     }
 
     @GET
     @Path("/queries")
     public CompletionStage<List<World>> queries(@QueryParam("queries") String queries) {
-        Maybe<World>[] worlds = new Maybe[parseQueryCount(queries)];
-        Arrays.setAll(worlds, i -> randomWorld());
+        var worlds = new CompletableFuture[parseQueryCount(queries)];
+        var ret = new World[worlds.length];
+        Arrays.setAll(worlds, i -> {
+            return randomWorld().thenApply(w -> ret[i] = w);
+        });
 
-        return Maybe.concatArray(worlds)
-                .toList()
-                .to(m -> {
-                    CompletableFuture<List<World>> cf = new CompletableFuture<>();
-                    m.subscribe(cf::complete, cf::completeExceptionally);
-                    return cf;
-                });
+        return CompletableFuture.allOf(worlds).thenApply(v -> Arrays.asList(ret));
     }
 
     @GET
     @Path("/updates")
     public CompletionStage<List<World>> updates(@QueryParam("queries") String queries) {
-        Single<World>[] worlds = new Single[parseQueryCount(queries)];
-        Arrays.setAll(worlds, i -> randomWorld().flatMapSingle(world -> {
-            world.setId(randomWorldNumber());
-            return worldRepository.update(world);
-        }));
+        var worlds = new CompletableFuture[parseQueryCount(queries)];
+        var ret = new World[worlds.length];
+        Arrays.setAll(worlds, i -> {
+            return randomWorld().thenApply(w -> {
+                w.setRandomNumber(randomWorldNumber());
+                ret[i] = w;
+                return w;
+            });
+        });
 
-        return Single.concatArray(worlds)
-                .toList()
-                .to(m -> {
-                    CompletableFuture<List<World>> cf = new CompletableFuture<>();
-                    m.subscribe(cf::complete, cf::completeExceptionally);
-                    return cf;
-                });
+        return CompletableFuture.allOf(worlds).thenCompose(v -> worldRepository.update(ret)).thenApply(v -> Arrays.asList(ret));
     }
 
-    private Maybe<World> randomWorld() {
+    private CompletionStage<World> randomWorld() {
         return worldRepository.find(randomWorldNumber());
     }
 

@@ -45,10 +45,12 @@
         "versus": "Netty"
       },
       "pgclient": {
-        "db_url": "/pgclient/db",
-        "query_url": "/pgclient/queries?queries=",
-        "update_url": "/pgclient/updates?queries=",
-        "fortune_url": "/pgclient/fortunes",
+        "json_url": "/json",
+        "db_url": "/db",
+        "query_url": "/queries?queries=",
+        "update_url": "/updates?queries=",
+        "fortune_url": "/fortunes",
+        "plaintext_url": "/plaintext",
         "port": 8080,
         "approach": "Realistic",
         "classification": "fullstack",

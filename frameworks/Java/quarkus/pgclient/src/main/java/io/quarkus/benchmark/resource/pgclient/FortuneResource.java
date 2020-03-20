@@ -3,7 +3,6 @@ package io.quarkus.benchmark.resource.pgclient;
 import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -22,7 +21,7 @@ import io.quarkus.benchmark.model.Fortune;
 import io.quarkus.benchmark.repository.pgclient.FortuneRepository;
 
 @ApplicationScoped
-@Path("/pgclient")
+@Path("/")
 @Produces(MediaType.TEXT_HTML)
 @Consumes(MediaType.APPLICATION_JSON)
 public class FortuneResource {
@@ -41,18 +40,12 @@ public class FortuneResource {
     @Path("/fortunes")
     public CompletionStage<String> fortunes() {
         return repository.findAll()
-                .map(fortunes -> {
+                .thenApply( fortunes -> {
                     fortunes.add(new Fortune(0, "Additional fortune added at request time."));
                     fortunes.sort(Comparator.comparing(fortune -> fortune.getMessage()));
-
                     StringWriter writer = new StringWriter();
                     template.execute(writer, Collections.singletonMap("fortunes", fortunes));
-
                     return writer.toString();
-                }).to(m -> {
-                    CompletableFuture<String> cf = new CompletableFuture<>();
-                    m.subscribe(cf::complete, cf::completeExceptionally);
-                    return cf;
-                });
+                } );
     }
 }

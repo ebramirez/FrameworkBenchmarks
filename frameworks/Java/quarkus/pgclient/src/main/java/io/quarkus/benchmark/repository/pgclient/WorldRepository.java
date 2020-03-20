@@ -1,38 +1,38 @@
 package io.quarkus.benchmark.repository.pgclient;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.quarkus.benchmark.model.World;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.vertx.reactivex.pgclient.PgPool;
-import io.vertx.reactivex.sqlclient.RowIterator;
-import io.vertx.reactivex.sqlclient.RowSet;
-import io.vertx.reactivex.sqlclient.Tuple;
+import io.vertx.axle.sqlclient.Row;
+import io.vertx.axle.sqlclient.Tuple;
 
 @ApplicationScoped
 public class WorldRepository {
 
-    private static Logger LOG = LoggerFactory.getLogger(WorldRepository.class);
-
     @Inject
-    PgPool client;
+    PgClients clients;
 
-    public Maybe<World> find(int id) {
-        return client.rxPreparedQuery("SELECT id, randomnumber FROM world WHERE id = $1", Tuple.of(id))
-                .map(RowSet::iterator)
-                .filter(RowIterator::hasNext)
-                .map(RowIterator::next)
-                .map(row -> new World(row.getInteger(0), row.getInteger(1)));
+    public CompletionStage<World> find(int id) {
+        return clients.getClient().preparedQuery("SELECT * FROM World WHERE id = $1", Tuple.of(id))
+                .thenApply(rowset -> {
+                    Row row = rowset.iterator().next();
+                    return new World(row.getInteger(0), row.getInteger(1));
+                });
     }
 
-    public Single<World> update(World world) {
-        return client.rxPreparedQuery("UPDATE world SET randomnumber = $1 WHERE id = $2",
-                Tuple.of(world.getRandomNumber(), world.getId()))
-                .map(rows -> world);
+    public CompletionStage<Void> update(World[] worlds) {
+        Arrays.sort(worlds);
+        List<Tuple> args = new ArrayList<>(worlds.length);
+        for(World world : worlds) {
+            args.add(Tuple.of(world.getId(), world.getRandomNumber()));
+        }
+        return clients.getPool().preparedBatch("UPDATE World SET randomNumber = $2 WHERE id = $1", args)
+                .thenApply(v -> null);
     }
 }

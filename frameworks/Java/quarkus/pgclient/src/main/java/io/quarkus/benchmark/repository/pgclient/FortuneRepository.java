@@ -2,33 +2,28 @@ package io.quarkus.benchmark.repository.pgclient;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import io.quarkus.benchmark.model.Fortune;
-import io.reactivex.Single;
-import io.vertx.reactivex.pgclient.PgPool;
-import io.vertx.reactivex.sqlclient.Row;
-import io.vertx.reactivex.sqlclient.RowSet;
+import io.vertx.axle.sqlclient.Row;
 
 @ApplicationScoped
 public class FortuneRepository {
 
     @Inject
-    PgPool client;
+    PgClients clients;
 
-    public Single<List<Fortune>> findAll() {
-        return client.rxQuery("SELECT id, message FROM fortune")
-                .map(RowSet::iterator)
-                .map(rowIterator -> {
-                    List<Fortune> fortunes = new ArrayList<>();
-                    while (rowIterator.hasNext()) {
-                        Row row = rowIterator.next();
-                        Fortune fortune = new Fortune(row.getInteger(0), row.getString(1));
-                        fortunes.add(fortune);
+    public CompletionStage<List<Fortune>> findAll() {
+        return clients.getClient().preparedQuery("SELECT * FROM Fortune" )
+                .thenApply(rowset -> {
+                    List<Fortune> ret = new ArrayList<>(rowset.size()+1);
+                    for(Row r : rowset) {
+                        ret.add(new Fortune(r.getInteger("id"), r.getString("message")));
                     }
-                    return fortunes;
+                    return ret;
                 });
     }
 }
