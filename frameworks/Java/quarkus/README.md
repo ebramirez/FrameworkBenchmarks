@@ -45,7 +45,7 @@ There is currently two repository implementations.
 ## Versions
 
 * [Java OpenJDK 11](http://openjdk.java.net/)
-* [Quarkus 1.1.1](https://quarkus.io)
+* [Quarkus 1.3.0](https://quarkus.io)
 
 ## Test URLs
 
